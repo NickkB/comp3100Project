@@ -36,7 +36,7 @@ public class XMLReader {
                 String memory = elem.getAttributes().getNamedItem("memory").getNodeValue();
                 String disk = elem.getAttributes().getNamedItem("disk").getNodeValue();
      
-                serverInfo.add(new ServerInfo(type, limit, bootupTime, hourlyRate, cores, memory, disk));
+                //serverInfo.add(new ServerInfo(type, limit, bootupTime, hourlyRate, cores, memory, disk));
             }
         }
         for (ServerInfo servers: serverInfo)

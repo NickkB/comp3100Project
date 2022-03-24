@@ -1,3 +1,7 @@
 
 ds-client
 ds-system.xml
+*.class
+java-Client/src/sources.txt
+*.xml
+java-Client/bin/sources.txt

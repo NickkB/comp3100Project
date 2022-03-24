@@ -6,12 +6,12 @@ public class LargestRoundRobbin{
 
     Utilities utilities;
     ClientAction clientAction;
-    //SystemInfo sysInfo; 
+
 
     public LargestRoundRobbin() throws IOException, ParserConfigurationException, SAXException{
         utilities = new Utilities();
         clientAction = new ClientAction();
-        //sysInfo = new SystemInfo();
+
         
         
         clientAction.sendGETSAll(utilities.getOutputStream());
