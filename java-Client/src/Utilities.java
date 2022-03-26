@@ -25,30 +25,11 @@ public class Utilities{
         clientAction.sendREDY(outputStream);
     }
 
-    public ServerOutObj readServerOutput() throws IOException{
-        
-        String input = (String)inputReader.readLine();
-        
+    public String[] readServerOutput() throws IOException{    
+        String input = (String)inputReader.readLine();      
         String[] serverInput = splitInput(input);
-
-        System.out.println(Arrays.deepToString(serverInput));
-
-        switch(serverInput[0]){
-            case "JOBN":
-                return new JOBNEvent(serverInput[1], serverInput[2], serverInput[3], serverInput[4], serverInput[5], serverInput[6]);
-            case "DATA":
-                return new DATAEvent(serverInput[1], serverInput[2]);
-            default:
-                //readStringOutput(serverInput[0]);
-                break;
-        }
-
-        return null;
+        return serverInput;
     }
-
-    // private String readStringOutput(String input){
-    //     return input;
-    // }
 
     private String[] splitInput(String input) throws IOException{
         String[] serverInputArr = input.split("\\s+");
