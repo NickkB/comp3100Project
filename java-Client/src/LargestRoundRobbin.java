@@ -55,14 +55,12 @@ public class LargestRoundRobbin{
             servers.setLastUsedServer(servers.getServer(0));
         }
         else if(servers.getServerByID(servers.getLastUsedServer().getType(), (servers.getLastUsedServer().getID() + 1)) == null){
-            System.out.println((servers.getLastUsedServer().getID() + 1));
             clientAction.sendSCHD(job.jobID, servers.getLastUsedServer().getType(), "0", utilities.getOutputStream());
             servers.setLastUsedServer(servers.getServerByID(servers.getLastUsedServer().getType(), 0));
         }
         else{
             Integer x = servers.getLastUsedServer().getID(); 
             x = x + 1;
-            System.out.println(x);
             clientAction.sendSCHD(job.jobID, servers.getLastUsedServer().getType(), x.toString(), utilities.getOutputStream());
             servers.setLastUsedServer(servers.getServerByID(servers.getLastUsedServer().getType(), x));
         }
