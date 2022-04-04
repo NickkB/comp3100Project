@@ -1,6 +1,5 @@
 import java.io.*;
 import java.net.*;
-import java.util.Arrays;
 
 public class Utilities{
 
@@ -9,6 +8,8 @@ public class Utilities{
     private BufferedReader inputReader;
     private ClientAction clientAction; 
 
+    //Initiates a connection with ds-server 
+    //Uses port 50000
     public void initConnection() throws UnknownHostException, IOException{
         clientAction = new ClientAction();
         socket = new Socket("localhost", 50000);
@@ -17,6 +18,7 @@ public class Utilities{
         handShake();
     }
 
+    //Executes the initial hand shake with ds-server
     private void handShake() throws IOException{
         clientAction.sendHELO(outputStream);
         readServerOutput();
@@ -25,17 +27,20 @@ public class Utilities{
         clientAction.sendREDY(outputStream);
     }
 
+    //reads the output from the server and splits the string by whitespace 
     public String[] readServerOutput() throws IOException{    
         String input = (String)inputReader.readLine();      
         String[] serverInput = splitInput(input);
         return serverInput;
     }
 
+    //splits the string by white space
     private String[] splitInput(String input) throws IOException{
         String[] serverInputArr = input.split("\\s+");
         return serverInputArr;
     }
 
+    // Closes the connection with ds-server
     public void closeConnection() throws IOException{
         inputReader.close();
         socket.close();

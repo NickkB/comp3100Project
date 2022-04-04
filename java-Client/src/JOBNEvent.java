@@ -1,4 +1,4 @@
-public class JOBNEvent implements ServerOutObj{
+public class JOBNEvent {
     
     String submitTime; 
     String jobID;

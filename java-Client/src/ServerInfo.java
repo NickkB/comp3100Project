@@ -61,6 +61,8 @@ public class ServerInfo {
         }
     }
 
+    //Class for server object. 
+    //Contains all information provided by ds-server GETS request
     static class Server {
         String serverType;
         Integer serverID;

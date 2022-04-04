@@ -9,6 +9,7 @@ public class LargestRoundRobbin{
     ServerInfo servers;
     JOBNEvent job;
 
+    //Runs the largest round robin algorithm
     public LargestRoundRobbin() throws IOException, ParserConfigurationException, SAXException{
         utilities = new Utilities();
         clientAction = new ClientAction();
@@ -40,14 +41,14 @@ public class LargestRoundRobbin{
                 default:
                     break;
             }
-        }
- 
+        } 
     }
 
-
-    public void getNextServer(String[] input) throws IOException{
-
-        
+    //Schedules the waiting job to the next server. 
+    //If it is the first job. It will schedule to the largest server type with ID 0
+    //else if server with ID + 1 == null, schedule job to first server
+    //else schedule to server with ID + 1
+    public void getNextServer(String[] input) throws IOException{   
         servers.importServers(new DATAEvent(input[1], input[2]), clientAction, utilities);
         if(servers.getLastUsedServer() == null){
             servers.sortListByCoreCount();
@@ -65,9 +66,7 @@ public class LargestRoundRobbin{
             servers.setLastUsedServer(servers.getServerByID(servers.getLastUsedServer().getType(), x));
         }
         
-        // servers.printArray();
     }
-
 }
 
 
