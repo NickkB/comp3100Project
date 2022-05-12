@@ -1,8 +1,0 @@
-./App.java
-./ClientAction.java
-./DATAEvent.java
-./JOBNEvent.java
-./LargestRoundRobbin.java
-./ServerInfo.java
-./Utilities.java
-./XMLReader.java
