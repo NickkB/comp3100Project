@@ -2,6 +2,8 @@ import java.io.*;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
 
+import ServerEvents.JOBNEvent;
+
 public class Algo{
 
     Utilities utilities;
@@ -9,13 +11,13 @@ public class Algo{
     ServerInfo servers;
     JOBNEvent job;
 
-    //Runs the largest round robin algorithm
     public Algo() throws IOException, ParserConfigurationException, SAXException{
         utilities = new Utilities();
         clientAction = new ClientAction();
+        utilities.initConnection();
         servers = new ServerInfo();    
         
-        utilities.initConnection();
+
         boolean stopLoop = true; 
         while(stopLoop){
             String[] serverInput = utilities.readServerOutput();

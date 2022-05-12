@@ -1,45 +1,38 @@
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Comparator;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+import ServerEvents.DATAEvent;
 
 public class ServerInfo {
 
     ArrayList<Server> servers;
-    Server lastUsedServer;
 
-    public ServerInfo(){
+    public ServerInfo() throws ParserConfigurationException, SAXException, IOException{
         servers = new ArrayList<>();
+        initServers();
     }
 
-    public void importServers(DATAEvent dataEvent, ClientAction clientAction, Utilities utilities) throws IOException{
-        resetServerList();
+    public void updateServerStates(DATAEvent dataEvent, ClientAction clientAction, Utilities utilities) throws IOException{
         clientAction.sendOK(utilities.getOutputStream());
         for(int i = 0; i < dataEvent.getCount(); i++){
             String temp = (String)utilities.getInputReader().readLine();
-            String[] tempInput = temp.split("\\s+");
-            addServer(tempInput[0], tempInput[1], tempInput[2], tempInput[3], tempInput[4], tempInput[5], tempInput[6], tempInput[7], tempInput[8]);    
+            String[] tempInput = temp.split("\\s+");   
+            getServerByID(tempInput[0], Integer.parseInt(tempInput[1])).updateServer(tempInput[2], tempInput[3], tempInput[4], tempInput[5], tempInput[6], tempInput[7], tempInput[8]);
         }
         clientAction.sendOK(utilities.getOutputStream());
     }
 
-    public void addServer(String serverType, String serverID, String state, String curStartTime, String cores, String memory, String disk, String waitingJobs, String runningJobs){
-        servers.add(new Server(serverType, serverID, state, curStartTime, cores, memory, disk, waitingJobs, runningJobs));
-    }
-
-    public void resetServerList(){
-        servers = new ArrayList<>(); 
-    }
-
     public void sortListByCoreCount(){
         servers.sort(Comparator.comparing(Server::getCoresInt).reversed());
-    }
-
-    public void setLastUsedServer(Server server){
-        lastUsedServer = new Server(server); 
-    }
-
-    public Server getLastUsedServer(){
-        return lastUsedServer;
     }
 
     public Server getServer(int index){
@@ -61,8 +54,39 @@ public class ServerInfo {
         }
     }
 
+    //Gets inital server information from ds-system.xml 
+    public void initServers() throws ParserConfigurationException, SAXException, IOException{
+
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        Document document = builder.parse(new File("ds-system.xml"));
+        
+        NodeList nodeList = document.getElementsByTagName("server");
+
+        for (int i = 0; i < nodeList.getLength(); i++) {
+            Node node = nodeList.item(i);
+            if (node.getNodeType() == Node.ELEMENT_NODE) {
+                Element elem = (Element) node;
+
+                String type = elem.getAttributes().getNamedItem("type").getNodeValue();
+                String limit = elem.getAttributes().getNamedItem("limit").getNodeValue();
+                String bootupTime = elem.getAttributes().getNamedItem("bootupTime").getNodeValue();
+                String hourlyRate = elem.getAttributes().getNamedItem("hourlyRate").getNodeValue();
+                String cores = elem.getAttributes().getNamedItem("cores").getNodeValue();
+                String memory = elem.getAttributes().getNamedItem("memory").getNodeValue();
+                String disk = elem.getAttributes().getNamedItem("disk").getNodeValue();
+                
+                Integer limitInt = Integer.parseInt(limit);
+
+                for(int j = 0; j < limitInt; j++){
+                    servers.add(new Server(type, j, bootupTime, hourlyRate, cores, memory, disk));
+                }
+                
+            }
+        }
+    }
+
     //Class for server object. 
-    //Contains all information provided by ds-server GETS request
     static class Server {
         String serverType;
         Integer serverID;
@@ -73,17 +97,16 @@ public class ServerInfo {
         Integer disk;
         Integer waitingJobs;
         Integer runningJobs;
-    
-        public Server(String serverType, String serverID, String state, String curStartTime, String cores, String memory, String disk, String waitingJobs, String runningJobs){
+        Integer bootupTime;
+        float hourlyRate;
+
+        public Server(String serverType, int serverID, String bootupTime, String hourlyRate, String cores, String memory, String disk){
             this.serverType = serverType;
-            this.serverID = Integer.parseInt(serverID);
-            this.state = state;
-            this.curStartTime = Integer.parseInt(curStartTime);
+            this.serverID = serverID;
+            this.hourlyRate = Float.parseFloat(hourlyRate);
             this.cores = Integer.parseInt(cores);
             this.memory = Integer.parseInt(memory);
             this.disk = Integer.parseInt(disk);
-            this.waitingJobs = Integer.parseInt(waitingJobs);;
-            this.runningJobs = Integer.parseInt(runningJobs);;
         }
 
         public Server(Server server){
@@ -95,6 +118,16 @@ public class ServerInfo {
             this.disk = server.disk;
             this.waitingJobs = server.waitingJobs;
             this.runningJobs = server.runningJobs;
+        }
+
+        public void updateServer(String state, String curStartTime, String cores, String memory, String disk, String waitingJobs, String runningJobs){
+            this.state = state;
+            this.curStartTime = Integer.parseInt(curStartTime);
+            this.cores = Integer.parseInt(cores);
+            this.memory = Integer.parseInt(memory);
+            this.disk = Integer.parseInt(disk);
+            this.waitingJobs = Integer.parseInt(waitingJobs);
+            this.runningJobs = Integer.parseInt(runningJobs);
         }
     
         public String getType(){
