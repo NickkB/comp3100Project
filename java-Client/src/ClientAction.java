@@ -39,4 +39,12 @@ public class ClientAction {
         outputStream.write(("GETS Capable " + core + " " + memory + " " + disk + "\n").getBytes());
     }
 
+    public void sendLSTJ(String serverType, String serverID, DataOutputStream outputStream) throws IOException{
+        outputStream.write(("LSTJ " + serverType + " " + serverID + "\n").getBytes());
+    }
+
+    public void sendTERM(String serverType, String serverID, DataOutputStream outputStream) throws IOException{
+        outputStream.write(("TERM " + serverType + " " + serverID + "\n").getBytes());
+    }
+
 }

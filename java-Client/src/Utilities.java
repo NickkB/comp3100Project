@@ -29,8 +29,8 @@ public class Utilities{
 
     //reads the output from the server and splits the string by whitespace 
     public String[] readServerOutput() throws IOException{    
-        String input = (String)inputReader.readLine();      
-        String[] serverInput = splitInput(input);
+        String input = (String)inputReader.readLine();
+        String[] serverInput = splitInput(input);       
         return serverInput;
     }
 

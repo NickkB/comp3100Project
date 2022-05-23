@@ -10,29 +10,43 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import ServerEvents.DATAEvent;
-
 public class ServerInfo {
 
     ArrayList<Server> servers;
+    ArrayList<Server> tempServersList;
 
     public ServerInfo() throws ParserConfigurationException, SAXException, IOException{
         servers = new ArrayList<>();
         initServers();
     }
 
-    public void updateServerStates(DATAEvent dataEvent, ClientAction clientAction, Utilities utilities) throws IOException{
+    public void updateServerStates(String dataEvent, ClientAction clientAction, Utilities utilities) throws IOException{
         clientAction.sendOK(utilities.getOutputStream());
-        for(int i = 0; i < dataEvent.getCount(); i++){
-            String temp = (String)utilities.getInputReader().readLine();
-            String[] tempInput = temp.split("\\s+");   
+        tempServersList = new ArrayList<>();
+
+        for(int i = 0; i < Integer.parseInt(dataEvent); i++){
+            String[] tempInput = utilities.readServerOutput();   
             getServerByID(tempInput[0], Integer.parseInt(tempInput[1])).updateServer(tempInput[2], tempInput[3], tempInput[4], tempInput[5], tempInput[6], tempInput[7], tempInput[8]);
+            tempServersList.add(getServerByID(tempInput[0], Integer.parseInt(tempInput[1])));
         }
         clientAction.sendOK(utilities.getOutputStream());
+        updateServerJobStates(clientAction, utilities);
+  
+    }
+
+    private void updateServerJobStates(ClientAction clientAction, Utilities utilities) throws IOException{
+        for(int i = 0; i < tempServersList.size(); i++){
+            tempServersList.get(i).updateJobListState(clientAction, utilities);
+        }
     }
 
     public void sortListByCoreCount(){
-        servers.sort(Comparator.comparing(Server::getCoresInt).reversed());
+        tempServersList.sort(Comparator.comparing(Server::getCoresInt).reversed());
+    }
+
+    public void sortListByEstWaitTime(){
+        tempServersList.sort(Comparator.comparing(Server::getEstimateWaitTime));
+
     }
 
     public Server getServer(int index){
@@ -86,92 +100,6 @@ public class ServerInfo {
         }
     }
 
-    //Class for server object. 
-    static class Server {
-        String serverType;
-        Integer serverID;
-        String state;
-        Integer curStartTime;
-        Integer cores;
-        Integer memory;
-        Integer disk;
-        Integer waitingJobs;
-        Integer runningJobs;
-        Integer bootupTime;
-        float hourlyRate;
 
-        public Server(String serverType, int serverID, String bootupTime, String hourlyRate, String cores, String memory, String disk){
-            this.serverType = serverType;
-            this.serverID = serverID;
-            this.hourlyRate = Float.parseFloat(hourlyRate);
-            this.cores = Integer.parseInt(cores);
-            this.memory = Integer.parseInt(memory);
-            this.disk = Integer.parseInt(disk);
-        }
 
-        public Server(Server server){
-            this.serverType = server.serverType;
-            this.serverID = server.serverID;
-            this.state = server.state;
-            this.cores = server.cores;
-            this.memory = server.memory;
-            this.disk = server.disk;
-            this.waitingJobs = server.waitingJobs;
-            this.runningJobs = server.runningJobs;
-        }
-
-        public void updateServer(String state, String curStartTime, String cores, String memory, String disk, String waitingJobs, String runningJobs){
-            this.state = state;
-            this.curStartTime = Integer.parseInt(curStartTime);
-            this.cores = Integer.parseInt(cores);
-            this.memory = Integer.parseInt(memory);
-            this.disk = Integer.parseInt(disk);
-            this.waitingJobs = Integer.parseInt(waitingJobs);
-            this.runningJobs = Integer.parseInt(runningJobs);
-        }
-    
-        public String getType(){
-            return serverType;
-        }
-    
-        public Integer getID(){
-            return serverID;
-        }
-    
-        public String getState(){
-            return state;
-        }
-    
-        public Integer getCurStartTime(){
-            return curStartTime;
-        }
-    
-        public Integer getCoresInt(){
-            return cores;
-        }
-    
-        public Integer getMemory(){
-            return memory;
-        }
-    
-        public Integer getDisk(){
-            return disk;
-        }
-
-        public Integer getWaitingJobs(){
-            return waitingJobs;
-        }
-
-        public Integer getRunnningJobs(){
-            return runningJobs;
-        }
-        
-        @Override
-        public String toString(){
-            String serverInfo = serverType + " " + serverID + " " +  state + " " +   curStartTime + " " +   cores + " " +   memory + " " +  disk + " " + waitingJobs + " " + runningJobs;
-    
-            return serverInfo;
-        }
-
-    }
 }
