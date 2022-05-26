@@ -1,58 +1,63 @@
 import java.io.*;
 
-public class ClientAction {
+final class ClientAction {
 
-    public void sendHELO(DataOutputStream outputStream) throws IOException{
-        outputStream.write(("HELO\n").getBytes());
+    private ClientAction(){
+
     }
 
-    public void sendOK(DataOutputStream outputStream) throws IOException{
-        outputStream.write(("OK\n").getBytes());
+    public static void sendHELO() throws IOException{
+        Utilities.outputStream.write(("HELO\n").getBytes());
     }
 
-    public void sendQUIT(DataOutputStream outputStream) throws IOException{
-        outputStream.write(("QUIT\n").getBytes());
+    public static void sendOK() throws IOException{
+        Utilities.outputStream.write(("OK\n").getBytes());
     }
 
-    public void sendSCHD(String jobID, String serverType, String serverID, DataOutputStream outputStream) throws IOException{
-        outputStream.write(("SCHD " + jobID + " " + serverType + " " + serverID + "\n").getBytes());
+    public static void sendQUIT() throws IOException{
+        Utilities.outputStream.write(("QUIT\n").getBytes());
     }
 
-    public void sendAUTH(DataOutputStream outputStream) throws IOException{
+    public static void sendSCHD(String jobID, String serverType, String serverID) throws IOException{
+        Utilities.outputStream.write(("SCHD " + jobID + " " + serverType + " " + serverID + "\n").getBytes());
+    }
+
+    public static void sendAUTH() throws IOException{
         String username = System.getProperty("user.name");
-        outputStream.write(("AUTH " + username + "\n").getBytes());
+        Utilities.outputStream.write(("AUTH " + username + "\n").getBytes());
+        
     }
 
-    public void sendREDY(DataOutputStream outputStream) throws IOException{
-        outputStream.write(("REDY\n").getBytes());
+    public static void sendREDY() throws IOException{
+        Utilities.outputStream.write(("REDY\n").getBytes());
     }
 
-    public void sendGETSAll(DataOutputStream outputStream) throws IOException{
-        outputStream.write(("GETS All\n").getBytes());
+    public static void sendGETSAll() throws IOException{
+        Utilities.outputStream.write(("GETS All\n").getBytes());
     }
 
-    public void sendGETSType(String serverType, DataOutputStream outputStream) throws IOException{
-        outputStream.write(("GETS Type " + serverType + "\n").getBytes());
+    public static void sendGETSType(String serverType) throws IOException{
+        Utilities.outputStream.write(("GETS Type " + serverType + "\n").getBytes());
     }
 
-    public void sendGETSCapable(String core, String memory, String disk, DataOutputStream outputStream) throws IOException{
-        outputStream.write(("GETS Capable " + core + " " + memory + " " + disk + "\n").getBytes());
+    public static void sendGETSCapable(String core, String memory, String disk) throws IOException{
+        Utilities.outputStream.write(("GETS Capable " + core + " " + memory + " " + disk + "\n").getBytes());
     }
 
-    public void sendLSTJ(String serverType, String serverID, DataOutputStream outputStream) throws IOException{
-        outputStream.write(("LSTJ " + serverType + " " + serverID + "\n").getBytes());
+    public static void sendLSTJ(String serverType, String serverID) throws IOException{
+        Utilities.outputStream.write(("LSTJ " + serverType + " " + serverID + "\n").getBytes());
     }
 
-    public void sendTERM(String serverType, String serverID, DataOutputStream outputStream) throws IOException{
-        outputStream.write(("TERM " + serverType + " " + serverID + "\n").getBytes());
+    public static  void sendTERM(String serverType, String serverID) throws IOException{
+        Utilities.outputStream.write(("TERM " + serverType + " " + serverID + "\n").getBytes());
     }
 
-    public void sendMIGJ(String jobID, String srcServerType, String srcServerID, String tgtServerType, String tgtServerID, DataOutputStream outputStream) throws IOException{
-        outputStream.write(("MIGJ " + jobID + " " + srcServerType + " " + srcServerID + " " +  tgtServerType + " " +  tgtServerID + "\n").getBytes());
+    public static void sendMIGJ(String jobID, String srcServerType, String srcServerID, String tgtServerType, String tgtServerID) throws IOException{
+        Utilities.outputStream.write(("MIGJ " + jobID + " " + srcServerType + " " + srcServerID + " " +  tgtServerType + " " +  tgtServerID + "\n").getBytes());
     }
 
-    public void sendCNTJ(String serverType, String serverID, String jobState, DataOutputStream outputStream) throws IOException {
-        outputStream.write(("CNTJ " + serverType + " " + serverID + " " + jobState + "\n").getBytes());
+    public static void sendCNTJ(String serverType, String serverID, String jobState) throws IOException {
+        Utilities.outputStream.write(("CNTJ " + serverType + " " + serverID + " " + jobState + "\n").getBytes());
     }
 
 }

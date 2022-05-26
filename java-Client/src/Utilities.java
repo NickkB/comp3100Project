@@ -1,18 +1,20 @@
 import java.io.*;
 import java.net.*;
-import java.util.Arrays;
 
-public class Utilities{
+final class Utilities{
 
-    private Socket socket;
-    private DataOutputStream outputStream;
-    private BufferedReader inputReader;
-    private ClientAction clientAction; 
+    static Socket socket;
+    static DataOutputStream outputStream;
+    static BufferedReader inputReader;
+ 
 
+    private Utilities(){
+        
+    }
     //Initiates a connection with ds-server 
     //Uses port 50000
-    public void initConnection() throws UnknownHostException, IOException{
-        clientAction = new ClientAction();
+    public static void initConnection() throws UnknownHostException, IOException{
+
         socket = new Socket("localhost", 50000);
         outputStream = new DataOutputStream(socket.getOutputStream());
         inputReader = new BufferedReader(new InputStreamReader (socket.getInputStream()));
@@ -20,16 +22,16 @@ public class Utilities{
     }
 
     //Executes the initial hand shake with ds-server
-    private void handShake() throws IOException{
-        clientAction.sendHELO(outputStream);
+    private static void handShake() throws IOException{
+        ClientAction.sendHELO();
         readServerOutput();
-        clientAction.sendAUTH(outputStream); 
+        ClientAction.sendAUTH(); 
         readServerOutput();
-        clientAction.sendREDY(outputStream);
+        ClientAction.sendREDY();
     }
 
     //reads the output from the server and splits the string by whitespace 
-    public String[] readServerOutput() throws IOException{    
+    public static String[] readServerOutput() throws IOException{    
         String input = (String)inputReader.readLine();
         String[] serverInput = splitInput(input);     
         if(serverInput[0].equals(".") || serverInput[0] == "\n"){
@@ -40,22 +42,22 @@ public class Utilities{
     }
 
     //splits the string by white space
-    private String[] splitInput(String input) throws IOException{
+    private static String[] splitInput(String input) throws IOException{
         String[] serverInputArr = input.split("\\s+");
         return serverInputArr;
     }
 
     // Closes the connection with ds-server
-    public void closeConnection() throws IOException{
+    public static void closeConnection() throws IOException{
         inputReader.close();
         socket.close();
     }
 
-    public DataOutputStream getOutputStream(){
+    public static DataOutputStream getOutputStream(){
         return outputStream;
     }
 
-    public BufferedReader getInputReader(){
+    public static BufferedReader getInputReader(){
         return inputReader;
     }
 

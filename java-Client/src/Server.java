@@ -11,20 +11,18 @@ public class Server {
     Integer cores;
     Integer memory;
     Integer disk;
-    Integer waitingJobs;
-    Integer runningJobs;
+
     Integer bootupTime;
     float hourlyRate;
-    int sysTime; 
-    int estWaitTime;
-    
+ 
     int totalCores;
     
-    ArrayList<Job> jobList;
-     
+    CoreCounter coreCounter;
+    
+    JobList waitingJobs;
+    JobList runningJobs; 
 
     public Server(String serverType, int serverID, String bootupTime, String hourlyRate, String cores, String memory, String disk){
-        this.sysTime = 0;
         this.serverType = serverType;
         this.serverID = serverID;
         this.hourlyRate = Float.parseFloat(hourlyRate);
@@ -33,7 +31,9 @@ public class Server {
         this.memory = Integer.parseInt(memory);
         this.disk = Integer.parseInt(disk);
         this.bootupTime = Integer.parseInt(bootupTime);
-        jobList = new ArrayList<>();
+        waitingJobs = new JobList();
+        runningJobs = new JobList();
+        coreCounter = new CoreCounter(totalCores);
     }
 
     public Server(Server server){
@@ -43,84 +43,41 @@ public class Server {
         this.cores = server.cores;
         this.memory = server.memory;
         this.disk = server.disk;
-        this.waitingJobs = server.waitingJobs;
-        this.runningJobs = server.runningJobs;
     }
 
-    public void updateServer(int sysTime, String state, String curStartTime, String cores, String memory, String disk, String waitingJobs, String runningJobs){
+    public void updateServer(String state, String curStartTime, String cores, String memory, String disk){
         this.state = state;
         this.curStartTime = Integer.parseInt(curStartTime);
         this.cores = Integer.parseInt(cores);
         this.memory = Integer.parseInt(memory);
-        this.disk = Integer.parseInt(disk);
-        this.waitingJobs = Integer.parseInt(waitingJobs);
-        this.runningJobs = Integer.parseInt(runningJobs);
+
     }
 
     public void addJob(Job job){
-        job.assignedServerID = this.serverID.toString();
-        job.assignedServerType = this.serverType;
-        jobList.add(job);
-
+        coreCounter.submitJob(job);
     }
 
-    public void updateJobListState(ClientAction clientAction, Utilities utilities) throws IOException{
-        jobList = new ArrayList<>();
+    public void updateJobListState() throws IOException{
+        
+        ClientAction.sendLSTJ(this.serverType, this.serverID.toString());
+        String[] tempInput = Utilities.readServerOutput(); 
 
-        clientAction.sendLSTJ(this.serverType, this.serverID.toString(), utilities.getOutputStream());
-        String[] tempInput = utilities.readServerOutput(); 
-
-        clientAction.sendOK(utilities.getOutputStream());
+        ClientAction.sendOK();
          
         int dataEvent = Integer.parseInt(tempInput[1]);
 
         for(int i = 0; i < dataEvent; i++){
-            tempInput = utilities.readServerOutput(); 
+            tempInput = Utilities.readServerOutput(); 
             addJob(new Job(tempInput[0], tempInput[1], tempInput[2], tempInput[3], tempInput[4], tempInput[5], tempInput[6], tempInput[7])); 
         }
         if(dataEvent > 0){
-            clientAction.sendOK(utilities.getOutputStream());
+            ClientAction.sendOK();
         }
       
     }
 
-    public int getEstimateWaitTime(){
-        return estWaitTime;
-    }
-
-    public void estWaitTime(ClientAction clientAction, Utilities utilities) throws IOException, InterruptedException{
-        estWaitTime = 0;
-        clientAction.sendLSTJ(this.serverType, getID().toString(), utilities.getOutputStream());
-        
-        String[] tempInput = utilities.readServerOutput(); 
-        
-        int dataEvent = Integer.parseInt(tempInput[1]);
-        
-        clientAction.sendOK(utilities.getOutputStream());
-        
-        if(this.state.equals("inactive")){
-            
-            estWaitTime = bootupTime;
-        }
-        else if(dataEvent == 0){
-            
-            estWaitTime = 0;
-        }
-        else {
-            
-            for(int i = 0; i < dataEvent; i++){
-                tempInput = utilities.readServerOutput();               
-                if(tempInput[1].equals("2")){                   
-                    estWaitTime +=   Integer.parseInt(tempInput[3]) - sysTime;
-                }
-                else {
-                    estWaitTime += Integer.parseInt(tempInput[4]);
-
-                }
-            }
-            clientAction.sendOK(utilities.getOutputStream());
-        }
-   
+    public int getAvailableCores(){
+        return this.coreCounter.getAvailableCores();
     }
 
     public String getType(){
@@ -151,19 +108,59 @@ public class Server {
         return disk;
     }
 
-    public Integer getWaitingJobs(){
-        return waitingJobs;
-    }
 
-    public Integer getRunnningJobs(){
-        return runningJobs;
-    }
     
-    @Override
-    public String toString(){
-        String serverInfo = serverType + " " + serverID + " " +  state + " " +   curStartTime + " " +   cores + " " +   memory + " " +  disk + " " + waitingJobs + " " + runningJobs;
+    class CoreCounter{
+        
+        ArrayList<Cores> jobBucket; 
+        int totalCores; 
 
-        return serverInfo;
+        public CoreCounter(int totalCores){
+            this.totalCores = totalCores;
+            jobBucket = new ArrayList<>();
+            jobBucket.add(new Cores(totalCores));
+        }
+
+        public void submitJob(Job job){
+            for(int i = 0; i < jobBucket.size(); i++){
+                if(jobBucket.get(i).checkAvailableCores() - job.getCoreInt() >= 0){
+                    jobBucket.get(i).assignCores(job);
+                }
+                else if(i == jobBucket.size() - 1){
+                    jobBucket.add(new Cores(totalCores));
+                }
+            }
+        }
+
+        public void jobCompleted(Job job){
+            jobBucket.get(0).releaseCores(job);
+            if(jobBucket.get(0).checkAvailableCores() == totalCores){
+                jobBucket.remove(0);
+            }
+        }
+
+        public int getAvailableCores(){
+            return this.jobBucket.get(0).checkAvailableCores();
+        }
     }
 
+    class Cores{
+        int cores; 
+
+        public Cores(int coreCount){
+            cores = coreCount;
+        }
+
+        public int checkAvailableCores(){
+            return cores;
+        }
+
+        public void assignCores(Job job){
+            this.cores -= job.getCoreInt();
+        }
+
+        public void releaseCores(Job job){
+            this.cores += job.getCoreInt();
+        }
+    }
 }

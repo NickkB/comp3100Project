@@ -1,4 +1,5 @@
 public class Job {
+    
     public String submitTime; 
     public String jobID;
     public String estRuntime;
@@ -7,8 +8,7 @@ public class Job {
     public String disk; 
     public String jobState; 
     public String startTime; 
-    public String assignedServerType;
-    public String assignedServerID;
+  
 
     public Job(String jobID, String jobState, String submitTime, String startTime, String estRuntime, String core, String memory, String disk){
         this.submitTime = submitTime;
@@ -40,13 +40,9 @@ public class Job {
         return Integer.parseInt(submitTime);
     }
 
-    public String[] getAssignedServer(){
-        String[] temp = {assignedServerType, assignedServerID};
-        return temp;
+    public int getCoreInt(){
+        return Integer.parseInt(this.core);
     }
-
-    public void assignServer(String assignedServerType, String assignedServerID){
-        this.assignedServerType = assignedServerType;
-        this.assignedServerID = assignedServerID;
-    }
+    
+    
 }
