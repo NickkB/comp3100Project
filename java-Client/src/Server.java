@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 //Class for server object. 
 public class Server {
@@ -14,15 +15,21 @@ public class Server {
     Integer runningJobs;
     Integer bootupTime;
     float hourlyRate;
+    int sysTime; 
+    int estWaitTime;
     
-
-    ArrayList<Job> jobList; 
+    int totalCores;
+    
+    ArrayList<Job> jobList;
+     
 
     public Server(String serverType, int serverID, String bootupTime, String hourlyRate, String cores, String memory, String disk){
+        this.sysTime = 0;
         this.serverType = serverType;
         this.serverID = serverID;
         this.hourlyRate = Float.parseFloat(hourlyRate);
         this.cores = Integer.parseInt(cores);
+        this.totalCores = Integer.parseInt(cores);
         this.memory = Integer.parseInt(memory);
         this.disk = Integer.parseInt(disk);
         this.bootupTime = Integer.parseInt(bootupTime);
@@ -40,7 +47,7 @@ public class Server {
         this.runningJobs = server.runningJobs;
     }
 
-    public void updateServer(String state, String curStartTime, String cores, String memory, String disk, String waitingJobs, String runningJobs){
+    public void updateServer(int sysTime, String state, String curStartTime, String cores, String memory, String disk, String waitingJobs, String runningJobs){
         this.state = state;
         this.curStartTime = Integer.parseInt(curStartTime);
         this.cores = Integer.parseInt(cores);
@@ -51,7 +58,10 @@ public class Server {
     }
 
     public void addJob(Job job){
+        job.assignedServerID = this.serverID.toString();
+        job.assignedServerType = this.serverType;
         jobList.add(job);
+
     }
 
     public void updateJobListState(ClientAction clientAction, Utilities utilities) throws IOException{
@@ -59,9 +69,7 @@ public class Server {
 
         clientAction.sendLSTJ(this.serverType, this.serverID.toString(), utilities.getOutputStream());
         String[] tempInput = utilities.readServerOutput(); 
-        if(tempInput[0].equals(".")){
-            tempInput = utilities.readServerOutput();
-        }
+
         clientAction.sendOK(utilities.getOutputStream());
          
         int dataEvent = Integer.parseInt(tempInput[1]);
@@ -77,16 +85,42 @@ public class Server {
     }
 
     public int getEstimateWaitTime(){
-        if(state.equals("inactive")){
-            return curStartTime + bootupTime;
-        }
-        int temp = 0; 
-        for(Job job: jobList){
-            temp = temp + job.getEstRunTime();
-        }
-        return temp;
+        return estWaitTime;
+    }
+
+    public void estWaitTime(ClientAction clientAction, Utilities utilities) throws IOException, InterruptedException{
+        estWaitTime = 0;
+        clientAction.sendLSTJ(this.serverType, getID().toString(), utilities.getOutputStream());
         
-         
+        String[] tempInput = utilities.readServerOutput(); 
+        
+        int dataEvent = Integer.parseInt(tempInput[1]);
+        
+        clientAction.sendOK(utilities.getOutputStream());
+        
+        if(this.state.equals("inactive")){
+            
+            estWaitTime = bootupTime;
+        }
+        else if(dataEvent == 0){
+            
+            estWaitTime = 0;
+        }
+        else {
+            
+            for(int i = 0; i < dataEvent; i++){
+                tempInput = utilities.readServerOutput();               
+                if(tempInput[1].equals("2")){                   
+                    estWaitTime +=   Integer.parseInt(tempInput[3]) - sysTime;
+                }
+                else {
+                    estWaitTime += Integer.parseInt(tempInput[4]);
+
+                }
+            }
+            clientAction.sendOK(utilities.getOutputStream());
+        }
+   
     }
 
     public String getType(){

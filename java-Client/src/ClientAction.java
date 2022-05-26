@@ -47,4 +47,12 @@ public class ClientAction {
         outputStream.write(("TERM " + serverType + " " + serverID + "\n").getBytes());
     }
 
+    public void sendMIGJ(String jobID, String srcServerType, String srcServerID, String tgtServerType, String tgtServerID, DataOutputStream outputStream) throws IOException{
+        outputStream.write(("MIGJ " + jobID + " " + srcServerType + " " + srcServerID + " " +  tgtServerType + " " +  tgtServerID + "\n").getBytes());
+    }
+
+    public void sendCNTJ(String serverType, String serverID, String jobState, DataOutputStream outputStream) throws IOException {
+        outputStream.write(("CNTJ " + serverType + " " + serverID + " " + jobState + "\n").getBytes());
+    }
+
 }

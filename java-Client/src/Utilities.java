@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.*;
+import java.util.Arrays;
 
 public class Utilities{
 
@@ -30,7 +31,11 @@ public class Utilities{
     //reads the output from the server and splits the string by whitespace 
     public String[] readServerOutput() throws IOException{    
         String input = (String)inputReader.readLine();
-        String[] serverInput = splitInput(input);       
+        String[] serverInput = splitInput(input);     
+        if(serverInput[0].equals(".") || serverInput[0] == "\n"){
+            input = (String)inputReader.readLine();
+            serverInput = splitInput(input);
+        }  
         return serverInput;
     }
 

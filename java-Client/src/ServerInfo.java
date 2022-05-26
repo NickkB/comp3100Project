@@ -1,5 +1,6 @@
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -20,33 +21,47 @@ public class ServerInfo {
         initServers();
     }
 
-    public void updateServerStates(String dataEvent, ClientAction clientAction, Utilities utilities) throws IOException{
+    public void updateServerStates(int sysTime, String dataEvent, ClientAction clientAction, Utilities utilities) throws IOException, InterruptedException{
         clientAction.sendOK(utilities.getOutputStream());
         tempServersList = new ArrayList<>();
 
         for(int i = 0; i < Integer.parseInt(dataEvent); i++){
             String[] tempInput = utilities.readServerOutput();   
-            getServerByID(tempInput[0], Integer.parseInt(tempInput[1])).updateServer(tempInput[2], tempInput[3], tempInput[4], tempInput[5], tempInput[6], tempInput[7], tempInput[8]);
+            getServerByID(tempInput[0], Integer.parseInt(tempInput[1])).updateServer(sysTime, tempInput[2], tempInput[3], tempInput[4], tempInput[5], tempInput[6], tempInput[7], tempInput[8]);
             tempServersList.add(getServerByID(tempInput[0], Integer.parseInt(tempInput[1])));
+            
         }
         clientAction.sendOK(utilities.getOutputStream());
-        updateServerJobStates(clientAction, utilities);
-  
     }
 
-    private void updateServerJobStates(ClientAction clientAction, Utilities utilities) throws IOException{
-        for(int i = 0; i < tempServersList.size(); i++){
-            tempServersList.get(i).updateJobListState(clientAction, utilities);
+    public void updateServerJobStates(ClientAction clientAction, Utilities utilities) throws IOException{
+        for(int i = 0; i < servers.size(); i++){
+            servers.get(i).updateJobListState(clientAction, utilities);
         }
     }
 
     public void sortListByCoreCount(){
-        tempServersList.sort(Comparator.comparing(Server::getCoresInt).reversed());
+        tempServersList.sort(Comparator.comparing(Server::getCoresInt));
     }
 
-    public void sortListByEstWaitTime(){
+    public void sortListByEstWaitTime(ClientAction clientAction, Utilities utilities) throws IOException, InterruptedException{
+        for(int i = 0; i < tempServersList.size(); i++){
+            tempServersList.get(i).estWaitTime(clientAction,  utilities);
+        }
         tempServersList.sort(Comparator.comparing(Server::getEstimateWaitTime));
 
+    }
+
+    public Server getServerByBestFit(String cores){
+        int core = Integer.parseInt(cores);
+        Server bestServer = tempServersList.get(0); 
+        for(int i = 1; i < tempServersList.size(); i++){
+            Server tempServer = tempServersList.get(i);
+            if(bestServer.getCoresInt() - core > tempServer.getCoresInt() - core){
+                bestServer = tempServer;
+            }
+        }
+        return bestServer;
     }
 
     public Server getServer(int index){
