@@ -1,6 +1,5 @@
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 //Class for server object. 
 public class Server {
@@ -22,7 +21,9 @@ public class Server {
     JobList waitingJobs;
     JobList runningJobs; 
 
-    public Server(String serverType, int serverID, String bootupTime, String hourlyRate, String cores, String memory, String disk){
+    private JobList globalJobList;
+
+    public Server(String serverType, int serverID, String bootupTime, String hourlyRate, String cores, String memory, String disk, JobList globalJobList){
         this.serverType = serverType;
         this.serverID = serverID;
         this.hourlyRate = Float.parseFloat(hourlyRate);
@@ -34,6 +35,7 @@ public class Server {
         waitingJobs = new JobList();
         runningJobs = new JobList();
         coreCounter = new CoreCounter(totalCores);
+        this.globalJobList = globalJobList;
     }
 
     public Server(Server server){
@@ -67,8 +69,17 @@ public class Server {
         int dataEvent = Integer.parseInt(tempInput[1]);
 
         for(int i = 0; i < dataEvent; i++){
-            tempInput = Utilities.readServerOutput(); 
-            addJob(new Job(tempInput[0], tempInput[1], tempInput[2], tempInput[3], tempInput[4], tempInput[5], tempInput[6], tempInput[7])); 
+            tempInput = Utilities.readServerOutput();
+            Job tempJob = globalJobList.findJob(tempInput[0]);
+            tempJob.jobState = tempInput[1];
+            if(tempJob.jobState.equals("1")){
+                addJob(tempJob);
+                waitingJobs.addJob(tempJob, this);
+            }
+            else{
+                runningJobs.addJob(tempJob, this);
+            }
+             
         }
         if(dataEvent > 0){
             ClientAction.sendOK();

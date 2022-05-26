@@ -1,6 +1,5 @@
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -16,16 +15,24 @@ public class ServerInfo {
     ArrayList<Server> servers;
     ArrayList<Server> tempServersList;
 
-    public ServerInfo() throws ParserConfigurationException, SAXException, IOException{
+    public ServerInfo(JobList globalJobList) throws ParserConfigurationException, SAXException, IOException{
+        
         servers = new ArrayList<>();
-        initServers();
+        initServers(globalJobList);
     }
 
-    public void updateServerStates(String dataEvent) throws IOException, InterruptedException{
-        ClientAction.sendOK();
+    public void updateServerStates(Job job) throws IOException{
         tempServersList = new ArrayList<>();
+        
+        ClientAction.sendGETSCapable(job.core, job.memory, job.disk);
+        
+        String[] dataEvent = Utilities.readServerOutput();
 
-        for(int i = 0; i < Integer.parseInt(dataEvent); i++){
+        
+        
+        ClientAction.sendOK();
+        
+        for(int i = 0; i < Integer.parseInt(dataEvent[1]); i++){
             String[] tempInput = Utilities.readServerOutput();   
             getServerByID(tempInput[0], Integer.parseInt(tempInput[1])).updateServer(tempInput[2], tempInput[3], tempInput[4], tempInput[5], tempInput[6]);
             tempServersList.add(getServerByID(tempInput[0], Integer.parseInt(tempInput[1])));
@@ -76,7 +83,7 @@ public class ServerInfo {
     }
 
     //Gets inital server information from ds-system.xml 
-    public void initServers() throws ParserConfigurationException, SAXException, IOException{
+    public void initServers(JobList globalJobList) throws ParserConfigurationException, SAXException, IOException{
 
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = factory.newDocumentBuilder();
@@ -100,7 +107,7 @@ public class ServerInfo {
                 Integer limitInt = Integer.parseInt(limit);
 
                 for(int j = 0; j < limitInt; j++){
-                    servers.add(new Server(type, j, bootupTime, hourlyRate, cores, memory, disk));
+                    servers.add(new Server(type, j, bootupTime, hourlyRate, cores, memory, disk, globalJobList));
                 }
                 
             }
