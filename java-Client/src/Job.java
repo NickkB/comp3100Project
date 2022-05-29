@@ -7,8 +7,7 @@ public class Job {
     public String disk; 
     public String jobState; 
     public String startTime; 
-    public String assignedServerType;
-    public String assignedServerID;
+    public Server assignedServer;
 
     public Job(String jobID, String jobState, String submitTime, String startTime, String estRuntime, String core, String memory, String disk){
         this.submitTime = submitTime;
@@ -32,6 +31,16 @@ public class Job {
         this.startTime = job.startTime; 
     }
 
+    public void updateJob(String jobState, String submitTime, String startTime, String estRuntime, String core, String memory, String disk){
+        this.submitTime = submitTime;
+        this.estRuntime = estRuntime;
+        this.core = core;
+        this.memory = memory; 
+        this.disk = disk; 
+        this.jobState = jobState; 
+        this.startTime = startTime; 
+    }
+
     public int getEstRunTime(){
         return Integer.parseInt(estRuntime);
     }
@@ -40,13 +49,15 @@ public class Job {
         return Integer.parseInt(submitTime);
     }
 
-    public String[] getAssignedServer(){
-        String[] temp = {assignedServerType, assignedServerID};
-        return temp;
+    public Server getAssignedServer(){  
+        return assignedServer;
     }
 
-    public void assignServer(String assignedServerType, String assignedServerID){
-        this.assignedServerType = assignedServerType;
-        this.assignedServerID = assignedServerID;
+    public boolean isWaiting(){
+        return (jobState.equals("1"));
+    }
+
+    public void assignServer(Server server){
+        this.assignedServer = server;
     }
 }

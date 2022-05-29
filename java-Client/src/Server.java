@@ -14,12 +14,12 @@ public class Server {
     Integer runningJobs;
     Integer bootupTime;
     float hourlyRate;
-    int estWaitTime;
      
     ArrayList<Job> jobList;
+    JobList globalJobList;
      
 
-    public Server(String serverType, int serverID, String bootupTime, String hourlyRate, String cores, String memory, String disk){
+    public Server(String serverType, int serverID, String bootupTime, String hourlyRate, String cores, String memory, String disk, JobList globalJobList){
         this.serverType = serverType;
         this.serverID = serverID;
         this.hourlyRate = Float.parseFloat(hourlyRate);
@@ -27,6 +27,7 @@ public class Server {
         this.memory = Integer.parseInt(memory);
         this.disk = Integer.parseInt(disk);
         this.bootupTime = Integer.parseInt(bootupTime);
+        this.globalJobList = globalJobList;
         jobList = new ArrayList<>();
     }
 
@@ -41,7 +42,7 @@ public class Server {
         this.runningJobs = server.runningJobs;
     }
 
-    public void updateServer(int sysTime, String state, String curStartTime, String cores, String memory, String disk, String waitingJobs, String runningJobs){
+    public void updateServer(String state, String curStartTime, String cores, String memory, String disk, String waitingJobs, String runningJobs){
         this.state = state;
         this.curStartTime = Integer.parseInt(curStartTime);
         this.cores = Integer.parseInt(cores);
@@ -51,37 +52,42 @@ public class Server {
         this.runningJobs = Integer.parseInt(runningJobs);
     }
 
-    public void addJob(Job job){
-        job.assignedServerID = this.serverID.toString();
-        job.assignedServerType = this.serverType;
+    public void submitJob(Job job) throws IOException{
+        globalJobList.addJob(job, this);
         jobList.add(job);
+        ClientAction.sendSCHD(job.jobID, this.serverType, this.serverID.toString());
+    }
 
+    public boolean jobStateCheck() throws IOException{
+        ClientAction.sendCNTJ(this.serverType, this.serverID.toString(), "1");
+        String[] tempInput = Utilities.readServerOutput();
+        return (Integer.parseInt(tempInput[0]) == 0);
     }
 
     public void updateJobListState() throws IOException{
-        jobList = new ArrayList<>();
-
         ClientAction.sendLSTJ(this.serverType, this.serverID.toString());
         String[] tempInput = Utilities.readServerOutput(); 
-
         ClientAction.sendOK();
-         
         int dataEvent = Integer.parseInt(tempInput[1]);
-
         for(int i = 0; i < dataEvent; i++){
             tempInput = Utilities.readServerOutput(); 
-            addJob(new Job(tempInput[0], tempInput[1], tempInput[2], tempInput[3], tempInput[4], tempInput[5], tempInput[6], tempInput[7])); 
+            Job tempJob = new Job(tempInput[0], tempInput[1], tempInput[2], tempInput[3], tempInput[4], tempInput[5], tempInput[6], tempInput[7]);
+            tempJob.assignServer(this);
+            globalJobList.updateJob(tempJob);
         }
         if(dataEvent > 0){
             ClientAction.sendOK();
         }
-      
     }
 
-    public int getEstimateWaitTime(){
-        return estWaitTime;
+    public boolean serversNotEqual(Server server){
+        return (!this.serverType.equals(server.getType()) || !this.serverID.equals(server.getID()));
     }
 
+    public boolean hasJobs() throws IOException{
+        updateJobListState();
+        return jobList.isEmpty();
+    }
 
     public String getType(){
         return serverType;
@@ -119,11 +125,4 @@ public class Server {
         return runningJobs;
     }
     
-    @Override
-    public String toString(){
-        String serverInfo = serverType + " " + serverID + " " +  state + " " +   curStartTime + " " +   cores + " " +   memory + " " +  disk + " " + waitingJobs + " " + runningJobs;
-
-        return serverInfo;
-    }
-
 }

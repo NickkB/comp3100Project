@@ -11,39 +11,64 @@ import org.xml.sax.SAXException;
 
 public class ServerInfo {
 
-    ArrayList<Server> servers;
-    ArrayList<Server> tempServersList;
+    ArrayList<Server> serversAll;
+    ArrayList<Server> serversCapable;
+    JobList globalJobList;
+    
 
-    public ServerInfo() throws ParserConfigurationException, SAXException, IOException{
-        servers = new ArrayList<>();
-        initServers();
+    public ServerInfo(JobList globalJobList) throws ParserConfigurationException, SAXException, IOException{
+        serversAll = new ArrayList<>();
+        this.globalJobList = globalJobList;
+        initserversAll(globalJobList);
     }
 
-    public void updateServerStates(int sysTime, String dataEvent) throws IOException, InterruptedException{
-        ClientAction.sendOK();
-        tempServersList = new ArrayList<>();
+    public void submitJob(Job job) throws IOException, InterruptedException{
+        updateServerStates(job);
+        boolean jobSubmitted = false;
+        for(Server elm: serversCapable){
+            if(elm.getCoresInt() >= Integer.parseInt(job.core) && elm.jobStateCheck()){ 
+                elm.submitJob(job);
+                jobSubmitted = true; 
+                break;
+            }
+        }
+        if(!jobSubmitted){
+            Server bestServer = getServerByBestFit(job.core);
+            if(bestServer.cores - Integer.parseInt(job.core) >= 0 && bestServer.jobStateCheck()) {
+                bestServer.submitJob(job);
+                jobSubmitted = true; 
+            } 
+        }
+        if(!jobSubmitted){
+            Server bestServer = getServerByBestFit(job.core);
+            bestServer.submitJob(job);
+        }
+    }
 
-        for(int i = 0; i < Integer.parseInt(dataEvent); i++){
+    public void migrateJob(Job job, Server srcServer, Server tgtServer) throws IOException{
+        ClientAction.sendMIGJ(job.jobID, srcServer.getType(), srcServer.getID().toString(), tgtServer.getType(), tgtServer.getID().toString());
+        job.assignServer(tgtServer);
+        Utilities.readServerOutput();
+    }
+
+    public void updateServerStates(Job job) throws IOException, InterruptedException{
+        ClientAction.sendGETSCapable(job.core, job.memory, job.disk);
+        String[] dataEvent = Utilities.readServerOutput();   
+        ClientAction.sendOK();
+        serversCapable = new ArrayList<>();
+        for(int i = 0; i < Integer.parseInt(dataEvent[1]); i++){
             String[] tempInput = Utilities.readServerOutput();   
-            getServerByID(tempInput[0], Integer.parseInt(tempInput[1])).updateServer(sysTime, tempInput[2], tempInput[3], tempInput[4], tempInput[5], tempInput[6], tempInput[7], tempInput[8]);
-            tempServersList.add(getServerByID(tempInput[0], Integer.parseInt(tempInput[1])));
-            
+            getServerByID(tempInput[0], tempInput[1]).updateServer(tempInput[2], tempInput[3], tempInput[4], tempInput[5], tempInput[6], tempInput[7], tempInput[8]);
+            serversCapable.add(getServerByID(tempInput[0], tempInput[1])); 
         }
-        ClientAction.sendOK();
+        ClientAction.sendOK();  
     }
-
-    public void updateServerJobStates() throws IOException{
-        for(int i = 0; i < servers.size(); i++){
-            servers.get(i).updateJobListState();
-        }
-    }
-
 
     public Server getServerByBestFit(String cores){
         int core = Integer.parseInt(cores);
-        Server bestServer = tempServersList.get(0); 
-        for(int i = 1; i < tempServersList.size(); i++){
-            Server tempServer = tempServersList.get(i);
+        Server bestServer = serversCapable.get(0); 
+        for(int i = 1; i < serversCapable.size(); i++){
+            Server tempServer = serversCapable.get(i);
             if(bestServer.getCoresInt() - core > tempServer.getCoresInt() - core){
                 bestServer = tempServer;
             }
@@ -52,11 +77,12 @@ public class ServerInfo {
     }
 
     public Server getServer(int index){
-        return servers.get(index);
+        return serversAll.get(index);
     }
 
-    public Server getServerByID(String serverType, int ID){
-        for(Server elm: servers){
+    public Server getServerByID(String serverType, String id){
+        int ID = Integer.parseInt(id);
+        for(Server elm: serversAll){
             if(elm.getType().equals(serverType) && elm.getID() == ID){
                 return elm;
             }
@@ -64,8 +90,16 @@ public class ServerInfo {
         return null;
     }
 
+    public ArrayList<Server> getAllServers(){
+        return serversAll;
+    }
+
+    public boolean serverIsCapable(Server server){
+        return serversCapable.contains(server);
+    }
+
     //Gets inital server information from ds-system.xml 
-    public void initServers() throws ParserConfigurationException, SAXException, IOException{
+    public void initserversAll(JobList globalJobList) throws ParserConfigurationException, SAXException, IOException{
 
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = factory.newDocumentBuilder();
@@ -89,7 +123,7 @@ public class ServerInfo {
                 Integer limitInt = Integer.parseInt(limit);
 
                 for(int j = 0; j < limitInt; j++){
-                    servers.add(new Server(type, j, bootupTime, hourlyRate, cores, memory, disk));
+                    serversAll.add(new Server(type, j, bootupTime, hourlyRate, cores, memory, disk, globalJobList));
                 }
                 
             }
