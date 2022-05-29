@@ -43,6 +43,14 @@ public class Job {
     public int getCoreInt(){
         return Integer.parseInt(this.core);
     }
+
+    public int getMemoryInt(){
+        return Integer.parseInt(this.memory);
+    }
+
+    public int getDiskInt(){
+        return Integer.parseInt(this.disk);
+    }
     
     
 }

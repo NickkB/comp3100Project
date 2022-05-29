@@ -1,6 +1,7 @@
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.Arrays;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -13,54 +14,92 @@ import org.xml.sax.SAXException;
 public class ServerInfo {
 
     ArrayList<Server> servers;
-    ArrayList<Server> tempServersList;
+    JobList globalJobList;
 
-    public ServerInfo(JobList globalJobList) throws ParserConfigurationException, SAXException, IOException{
-        
+    public ServerInfo() throws ParserConfigurationException, SAXException, IOException{    
+        globalJobList = new JobList();
         servers = new ArrayList<>();
         initServers(globalJobList);
     }
 
-    public void updateServerStates(Job job) throws IOException{
-        tempServersList = new ArrayList<>();
-        
-        ClientAction.sendGETSCapable(job.core, job.memory, job.disk);
-        
-        String[] dataEvent = Utilities.readServerOutput();
-
-        
-        
-        ClientAction.sendOK();
-        
-        for(int i = 0; i < Integer.parseInt(dataEvent[1]); i++){
-            String[] tempInput = Utilities.readServerOutput();   
-            getServerByID(tempInput[0], Integer.parseInt(tempInput[1])).updateServer(tempInput[2], tempInput[3], tempInput[4], tempInput[5], tempInput[6]);
-            tempServersList.add(getServerByID(tempInput[0], Integer.parseInt(tempInput[1])));
-            
-        }
-        ClientAction.sendOK();
-    }
-
-    public void updateServerJobStates() throws IOException{
-        for(int i = 0; i < servers.size(); i++){
-            servers.get(i).updateJobListState();
-        }
-    }
-
-    public void sortListByCoreCount(){
-        tempServersList.sort(Comparator.comparing(Server::getCoresInt));
-    }
-
-    public Server getServerByBestFit(String cores){
-        int core = Integer.parseInt(cores);
-        Server bestServer = tempServersList.get(0); 
-        for(int i = 1; i < tempServersList.size(); i++){
-            Server tempServer = tempServersList.get(i);
-            if(bestServer.getCoresInt() - core > tempServer.getCoresInt() - core){
-                bestServer = tempServer;
+    public void submitJob(Job job) throws IOException{
+        balanceServers();
+        updateServerStates();
+        boolean jobSubmitted = false;
+        ArrayList<Server> tempServersList = getServerCapable(job);
+        for(Server elm: tempServersList){
+            if(elm.checkForInstantRun(job) && elm.jobStateCheck()){ 
+                jobSubmitted = true; 
+                elm.submitJob(job);
+                break;
             }
         }
-        return bestServer;
+        if(!jobSubmitted){
+            Server bestServer = tempServersList.get(0); 
+            for(int i = 1; i < tempServersList.size(); i++){
+                Server tempServer = tempServersList.get(i);
+                if(bestServer.getCoresInt() - job.getCoreInt() > tempServer.getCoresInt() - job.getCoreInt()){
+                    bestServer = tempServer;
+                }
+            }
+            if(bestServer.checkForInstantRun(job) && bestServer.jobStateCheck()) {
+                bestServer.submitJob(job);           
+                jobSubmitted = true; 
+            }
+            else{
+                bestServer.submitJob(job);
+            }
+            
+        }
+    }
+
+    public void updateServerStates() throws IOException{    
+        ClientAction.sendGETSAll(); 
+        String[] dataEvent = Utilities.readServerOutput();      
+        ClientAction.sendOK();   
+        for(int i = 0; i < Integer.parseInt(dataEvent[1]); i++){
+            String[] tempInput = Utilities.readServerOutput();   
+
+            getServerByID(tempInput[0], Integer.parseInt(tempInput[1])).updateServer(tempInput[2], tempInput[3], tempInput[4], tempInput[5], tempInput[6]);        
+        }
+        ClientAction.sendOK();
+        globalJobList.validateJobLists(servers);
+    }
+
+    public boolean balanceServers() throws IOException{
+        updateServerStates();
+        if(globalJobList.checkWaitingJobs()){
+            for(Server elm: servers){
+                 elm.balanceServer();
+             }
+             return false;
+        }
+        return true;
+    }
+
+    public void reSubmitJob(String jobID) throws IOException{
+        Job job = globalJobList.findJob(jobID);
+        Server server = globalJobList.getJobServer(job);
+        ClientAction.sendSCHD(job.jobID, server.getType(), server.getID().toString());
+
+    }
+
+    public void completeJob(String job){
+        globalJobList.removeJob(job);
+    }
+
+    public ArrayList<Server> getServerCapable(Job job) throws IOException{
+        ArrayList<Server> tempServerList = new ArrayList<>();
+        ClientAction.sendGETSCapable(job.core, job.memory, job.disk); 
+        String[] dataEvent = Utilities.readServerOutput();      
+        ClientAction.sendOK();   
+        for(int i = 0; i < Integer.parseInt(dataEvent[1]); i++){
+            String[] tempInput = Utilities.readServerOutput();   
+            tempServerList.add(getServerByID(tempInput[0], Integer.parseInt(tempInput[1])));          
+        }
+        ClientAction.sendOK();
+
+        return tempServerList;
     }
 
     public Server getServer(int index){
@@ -74,12 +113,6 @@ public class ServerInfo {
             }
         }
         return null;
-    }
-
-    public void printArray(){
-        for(Server ent: servers){
-            System.out.println(ent.toString());
-        }
     }
 
     //Gets inital server information from ds-system.xml 

@@ -60,4 +60,12 @@ final class ClientAction {
         Utilities.outputStream.write(("CNTJ " + serverType + " " + serverID + " " + jobState + "\n").getBytes());
     }
 
+    public static void sendKILJ(String serverType, String serverID, String jobID) throws IOException {
+        Utilities.outputStream.write(("KILJ " + serverType + " " + serverID + " " + jobID + "\n").getBytes());
+    }
+
+    public static void sendPSHJ() throws IOException {
+        Utilities.outputStream.write(("PSHJ \n").getBytes());
+    }
+
 }
