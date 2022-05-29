@@ -1,6 +1,5 @@
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 //Class for server object. 
 public class Server {
@@ -64,22 +63,22 @@ public class Server {
 
     }
 
-    public void updateJobListState(ClientAction clientAction, Utilities utilities) throws IOException{
+    public void updateJobListState() throws IOException{
         jobList = new ArrayList<>();
 
-        clientAction.sendLSTJ(this.serverType, this.serverID.toString(), utilities.getOutputStream());
-        String[] tempInput = utilities.readServerOutput(); 
+        ClientAction.sendLSTJ(this.serverType, this.serverID.toString());
+        String[] tempInput = Utilities.readServerOutput(); 
 
-        clientAction.sendOK(utilities.getOutputStream());
+        ClientAction.sendOK();
          
         int dataEvent = Integer.parseInt(tempInput[1]);
 
         for(int i = 0; i < dataEvent; i++){
-            tempInput = utilities.readServerOutput(); 
+            tempInput = Utilities.readServerOutput(); 
             addJob(new Job(tempInput[0], tempInput[1], tempInput[2], tempInput[3], tempInput[4], tempInput[5], tempInput[6], tempInput[7])); 
         }
         if(dataEvent > 0){
-            clientAction.sendOK(utilities.getOutputStream());
+            ClientAction.sendOK();
         }
       
     }
@@ -88,15 +87,15 @@ public class Server {
         return estWaitTime;
     }
 
-    public void estWaitTime(ClientAction clientAction, Utilities utilities) throws IOException, InterruptedException{
+    public void estWaitTime() throws IOException, InterruptedException{
         estWaitTime = 0;
-        clientAction.sendLSTJ(this.serverType, getID().toString(), utilities.getOutputStream());
+        ClientAction.sendLSTJ(this.serverType, getID().toString());
         
-        String[] tempInput = utilities.readServerOutput(); 
+        String[] tempInput = Utilities.readServerOutput(); 
         
         int dataEvent = Integer.parseInt(tempInput[1]);
         
-        clientAction.sendOK(utilities.getOutputStream());
+        ClientAction.sendOK();
         
         if(this.state.equals("inactive")){
             
@@ -109,7 +108,7 @@ public class Server {
         else {
             
             for(int i = 0; i < dataEvent; i++){
-                tempInput = utilities.readServerOutput();               
+                tempInput = Utilities.readServerOutput();               
                 if(tempInput[1].equals("2")){                   
                     estWaitTime +=   Integer.parseInt(tempInput[3]) - sysTime;
                 }
@@ -118,7 +117,7 @@ public class Server {
 
                 }
             }
-            clientAction.sendOK(utilities.getOutputStream());
+            ClientAction.sendOK();
         }
    
     }

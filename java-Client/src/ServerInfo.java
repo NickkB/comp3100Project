@@ -21,22 +21,22 @@ public class ServerInfo {
         initServers();
     }
 
-    public void updateServerStates(int sysTime, String dataEvent, ClientAction clientAction, Utilities utilities) throws IOException, InterruptedException{
-        clientAction.sendOK(utilities.getOutputStream());
+    public void updateServerStates(int sysTime, String dataEvent) throws IOException, InterruptedException{
+        ClientAction.sendOK();
         tempServersList = new ArrayList<>();
 
         for(int i = 0; i < Integer.parseInt(dataEvent); i++){
-            String[] tempInput = utilities.readServerOutput();   
+            String[] tempInput = Utilities.readServerOutput();   
             getServerByID(tempInput[0], Integer.parseInt(tempInput[1])).updateServer(sysTime, tempInput[2], tempInput[3], tempInput[4], tempInput[5], tempInput[6], tempInput[7], tempInput[8]);
             tempServersList.add(getServerByID(tempInput[0], Integer.parseInt(tempInput[1])));
             
         }
-        clientAction.sendOK(utilities.getOutputStream());
+        ClientAction.sendOK();
     }
 
-    public void updateServerJobStates(ClientAction clientAction, Utilities utilities) throws IOException{
+    public void updateServerJobStates() throws IOException{
         for(int i = 0; i < servers.size(); i++){
-            servers.get(i).updateJobListState(clientAction, utilities);
+            servers.get(i).updateJobListState();
         }
     }
 
@@ -44,9 +44,9 @@ public class ServerInfo {
         tempServersList.sort(Comparator.comparing(Server::getCoresInt));
     }
 
-    public void sortListByEstWaitTime(ClientAction clientAction, Utilities utilities) throws IOException, InterruptedException{
+    public void sortListByEstWaitTime() throws IOException, InterruptedException{
         for(int i = 0; i < tempServersList.size(); i++){
-            tempServersList.get(i).estWaitTime(clientAction,  utilities);
+            tempServersList.get(i).estWaitTime();
         }
         tempServersList.sort(Comparator.comparing(Server::getEstimateWaitTime));
 
