@@ -14,21 +14,16 @@ public class Server {
     Integer runningJobs;
     Integer bootupTime;
     float hourlyRate;
-    int sysTime; 
     int estWaitTime;
-    
-    int totalCores;
-    
+     
     ArrayList<Job> jobList;
      
 
     public Server(String serverType, int serverID, String bootupTime, String hourlyRate, String cores, String memory, String disk){
-        this.sysTime = 0;
         this.serverType = serverType;
         this.serverID = serverID;
         this.hourlyRate = Float.parseFloat(hourlyRate);
         this.cores = Integer.parseInt(cores);
-        this.totalCores = Integer.parseInt(cores);
         this.memory = Integer.parseInt(memory);
         this.disk = Integer.parseInt(disk);
         this.bootupTime = Integer.parseInt(bootupTime);
@@ -87,40 +82,6 @@ public class Server {
         return estWaitTime;
     }
 
-    public void estWaitTime() throws IOException, InterruptedException{
-        estWaitTime = 0;
-        ClientAction.sendLSTJ(this.serverType, getID().toString());
-        
-        String[] tempInput = Utilities.readServerOutput(); 
-        
-        int dataEvent = Integer.parseInt(tempInput[1]);
-        
-        ClientAction.sendOK();
-        
-        if(this.state.equals("inactive")){
-            
-            estWaitTime = bootupTime;
-        }
-        else if(dataEvent == 0){
-            
-            estWaitTime = 0;
-        }
-        else {
-            
-            for(int i = 0; i < dataEvent; i++){
-                tempInput = Utilities.readServerOutput();               
-                if(tempInput[1].equals("2")){                   
-                    estWaitTime +=   Integer.parseInt(tempInput[3]) - sysTime;
-                }
-                else {
-                    estWaitTime += Integer.parseInt(tempInput[4]);
-
-                }
-            }
-            ClientAction.sendOK();
-        }
-   
-    }
 
     public String getType(){
         return serverType;

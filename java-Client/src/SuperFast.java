@@ -10,15 +10,12 @@ public class SuperFast{
     ServerInfo servers;
     Job job;
     ArrayList<Job> jobList;
-    int jobTimeAvg;
-    int jobCount; 
 
     public SuperFast() throws IOException, ParserConfigurationException, SAXException, InterruptedException{
 
         Utilities.initConnection();
         servers = new ServerInfo();    
         jobList = new ArrayList<>();
-        jobTimeAvg = 0; 
 
         boolean stopLoop = false; 
         while(!stopLoop){

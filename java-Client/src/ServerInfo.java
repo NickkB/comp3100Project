@@ -1,7 +1,5 @@
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -40,17 +38,6 @@ public class ServerInfo {
         }
     }
 
-    public void sortListByCoreCount(){
-        tempServersList.sort(Comparator.comparing(Server::getCoresInt));
-    }
-
-    public void sortListByEstWaitTime() throws IOException, InterruptedException{
-        for(int i = 0; i < tempServersList.size(); i++){
-            tempServersList.get(i).estWaitTime();
-        }
-        tempServersList.sort(Comparator.comparing(Server::getEstimateWaitTime));
-
-    }
 
     public Server getServerByBestFit(String cores){
         int core = Integer.parseInt(cores);
@@ -75,12 +62,6 @@ public class ServerInfo {
             }
         }
         return null;
-    }
-
-    public void printArray(){
-        for(Server ent: servers){
-            System.out.println(ent.toString());
-        }
     }
 
     //Gets inital server information from ds-system.xml 
